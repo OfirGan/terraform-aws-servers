@@ -294,6 +294,7 @@ resource "aws_instance" "bastion_server" {
   vpc_security_group_ids      = [aws_security_group.bastion_sg.id]
   key_name                    = var.aws_server_key_name
   associate_public_ip_address = true
+  iam_instance_profile        = aws_iam_instance_profile.ec2_describe_instances_instance_profile.id
   tags                        = zipmap(var.servers_tags_structure, ["bastion", "bastion", "server", "Bastion-Server", "public", "${var.project_name}", "${var.owner_name}", "true", "ubuntu"])
 }
 
@@ -309,6 +310,7 @@ resource "aws_instance" "consul_servers" {
   vpc_security_group_ids = [aws_security_group.consul_sg.id]
   key_name               = var.aws_server_key_name
   source_dest_check      = false
+  iam_instance_profile   = aws_iam_instance_profile.ec2_describe_instances_instance_profile.id
   tags                   = zipmap(var.servers_tags_structure, ["consul", "service_discovery", "server", "Consul-Server-${count.index + 1}", "private", "${var.project_name}", "${var.owner_name}", "true", "ubuntu"])
 }
 
@@ -323,6 +325,7 @@ resource "aws_instance" "jenkins_server" {
   vpc_security_group_ids = [aws_security_group.jenkins_sg.id]
   key_name               = var.aws_server_key_name
   source_dest_check      = false
+  iam_instance_profile   = aws_iam_instance_profile.ec2_describe_instances_instance_profile.id
   tags                   = zipmap(var.servers_tags_structure, ["jenkins", "cicd", "server", "Jenkins-Server", "private", "${var.project_name}", "${var.owner_name}", "true", "ubuntu"])
 }
 
@@ -338,6 +341,7 @@ resource "aws_instance" "jenkins_nodes" {
   vpc_security_group_ids = [aws_security_group.jenkins_sg.id]
   key_name               = var.aws_server_key_name
   source_dest_check      = false
+  iam_instance_profile   = aws_iam_instance_profile.ec2_describe_instances_instance_profile.id
   tags                   = zipmap(var.servers_tags_structure, ["jenkins", "service_discovery", "node", "Jenkins-Node-${count.index + 1}", "private", "${var.project_name}", "${var.owner_name}", "true", "ubuntu"])
 }
 
@@ -435,12 +439,12 @@ resource "aws_alb_target_group_attachment" "consul_servers_alb_tg_attach" {
   count            = length(aws_instance.consul_servers)
   target_group_arn = aws_alb_target_group.consul_alb_tg.arn
   target_id        = aws_instance.consul_servers.*.id[count.index]
-  port             = 80
+  port             = 8500
 }
 
 resource "aws_alb_target_group" "consul_alb_tg" {
   name     = "consul-alb-tg"
-  port     = 8500
+  port     = 80
   protocol = "HTTP"
   vpc_id   = var.vpc_id
   stickiness {
@@ -451,7 +455,7 @@ resource "aws_alb_target_group" "consul_alb_tg" {
   health_check {
     port                = 8500
     protocol            = "HTTP"
-    path                = "/"
+    path                = "/v1/status/leader"
     healthy_threshold   = 2
     unhealthy_threshold = 2
     timeout             = 3
@@ -461,7 +465,7 @@ resource "aws_alb_target_group" "consul_alb_tg" {
 
 resource "aws_alb_listener" "consul_alb_listener" {
   load_balancer_arn = aws_alb.consul_alb.arn
-  port              = "8500"
+  port              = "80"
   protocol          = "HTTP"
   default_action {
     type             = "forward"
@@ -494,13 +498,13 @@ resource "aws_alb" "jenkins_alb" {
 resource "aws_alb_target_group_attachment" "jenkins_server_alb_attach" {
   target_group_arn = aws_alb_target_group.jenkins_alb_tg.arn
   target_id        = aws_instance.jenkins_server.id
-  port             = 80
+  port             = 8080
 }
 
 
 resource "aws_alb_target_group" "jenkins_alb_tg" {
   name     = "jenkins-alb-tg"
-  port     = 8080
+  port     = 80
   protocol = "HTTP"
   vpc_id   = var.vpc_id
   stickiness {
@@ -511,7 +515,7 @@ resource "aws_alb_target_group" "jenkins_alb_tg" {
   health_check {
     port                = 8080
     protocol            = "HTTP"
-    path                = "/"
+    path                = "/login"
     healthy_threshold   = 2
     unhealthy_threshold = 2
     timeout             = 3
@@ -521,7 +525,7 @@ resource "aws_alb_target_group" "jenkins_alb_tg" {
 
 resource "aws_alb_listener" "jenkins_alb_listener" {
   load_balancer_arn = aws_alb.jenkins_alb.arn
-  port              = "8080"
+  port              = "80"
   protocol          = "HTTP"
   default_action {
     type             = "forward"
