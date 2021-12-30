@@ -90,7 +90,7 @@ variable "owner_name" {
 variable "servers_tags_structure" {
   type        = list(string)
   description = "Consul server tags map"
-  default     = ["service", "service_role", "instance_type", "Name", "subnet_type", "project", "owner", "os_type", "is_consul_monitored"]
+  default     = ["service", "service_role", "instance_type", "Name", "subnet_type", "project", "owner", "is_consul_monitored", "os_type"]
 }
 
 ##################################################################################
