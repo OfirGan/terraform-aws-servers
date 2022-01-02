@@ -27,11 +27,6 @@ output "jenkins_nodes_private_ip" {
   value       = aws_instance.jenkins_nodes.*.private_ip
 }
 
-output "jenkins_nodes_private_ip" {
-  description = "Private IP's of the Jenkins nodes"
-  value       = aws_instance.jenkins_nodes.*.private_ip
-}
-
 output "jenkins_nodes_arns" {
   description = "ARN of the Jenkins Nodes Instances"
   value       = aws_instance.jenkins_nodes.*.arn
