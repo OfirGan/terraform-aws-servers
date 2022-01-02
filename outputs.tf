@@ -37,6 +37,11 @@ output "jenkins_nodes_ids" {
   value       = aws_instance.jenkins_nodes.*.id
 }
 
+output "ansible_server_private_ip" {
+  description = "Ansible Server Private IP"
+  value       = aws_instance.ansible_server.*.private_ip
+}
+
 output "consul_alb_public_dns" {
   description = "Consul ALB Public DNS name"
   value       = aws_alb.consul_alb.dns_name
