@@ -42,16 +42,6 @@ output "jenkins_alb_public_dns" {
   value       = aws_alb.jenkins_alb.dns_name
 }
 
-output "jenkins_nodes_arns" {
-  description = "ARN of the Jenkins Nodes Instances"
-  value       = aws_instance.jenkins_nodes.*.arn
-}
-
-output "jenkins_nodes_ids" {
-  description = "ID of the Jenkins Nodes Instances"
-  value       = aws_instance.jenkins_nodes.*.id
-}
-
 output "iam_role_arn" {
   description = "Describe Instances Role ARN"
   value       = aws_iam_role.ec2_describe_instances_role.arn

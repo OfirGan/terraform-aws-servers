@@ -1,6 +1,7 @@
 ##################################################################################
 # AMI - Ubuntu 18.04 Latest
-# IAM - Ansible -> Describe EC2 Instances, ALB write logs -> S3
+# IAM - Ansible -> Describe EC2 Instances, 
+# IAM - ALB write logs -> S3
 # SECURITY GROUPS - Bastion, Consul, Jenkins, Ansible, "Extra"
 # EC2 INSTANCES - Bastion Host, Consul Servers, Jenkins Server & Nodes, Ansible Server
 # S3 BUCKET - For ALB Logs
@@ -49,7 +50,11 @@ resource "aws_iam_policy" "ec2_describe_instances_policy" {
     "Statement" : [
       {
         "Effect" : "Allow",
-        "Action" : "ec2:Describe*",
+        "Action" : [
+          "ec2:Describe*",
+          "sts:AssumeRole",
+          "eks:DescribeCluster"
+        ],
         "Resource" : "*"
       }
     ]
