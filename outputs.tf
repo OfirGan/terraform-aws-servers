@@ -27,9 +27,19 @@ output "jenkins_nodes_private_ip" {
   value       = aws_instance.jenkins_nodes.*.private_ip
 }
 
-output "ansible_server_private_ip" {
-  description = "Ansible Server Private IP"
-  value       = aws_instance.ansible_server.*.private_ip
+output "jenkins_nodes_private_ip" {
+  description = "Private IP's of the Jenkins nodes"
+  value       = aws_instance.jenkins_nodes.*.private_ip
+}
+
+output "jenkins_nodes_arns" {
+  description = "ARN of the Jenkins Nodes Instances"
+  value       = aws_instance.jenkins_nodes.*.arn
+}
+
+output "jenkins_nodes_ids" {
+  description = "ID of the Jenkins Nodes Instances"
+  value       = aws_instance.jenkins_nodes.*.id
 }
 
 output "consul_alb_public_dns" {
