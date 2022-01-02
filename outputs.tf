@@ -54,5 +54,5 @@ output "jenkins_nodes_ids" {
 
 output "iam_role_arn" {
   description = "Describe Instances Role ARN"
-  value       = aws_iam_role.describe_instances.arn
+  value       = aws_iam_role.ec2_describe_instances_role.arn
 }
