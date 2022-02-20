@@ -365,7 +365,7 @@ resource "aws_instance" "prometheus_server" {
   ami                    = data.aws_ami.ubuntu_ami.id
   instance_type          = var.instance_type
   subnet_id              = var.private_subnets_ids[0]
-  vpc_security_group_ids = [aws_security_group.prometheus_sg, aws_security_group.default_sg.id, aws_security_group.monitor_agent_sg.id]
+  vpc_security_group_ids = [aws_security_group.prometheus_sg.id, aws_security_group.default_sg.id, aws_security_group.monitor_agent_sg.id]
   key_name               = var.aws_server_key_name
   source_dest_check      = false
   iam_instance_profile   = aws_iam_instance_profile.ec2_describe_instances_instance_profile.id
@@ -380,7 +380,7 @@ resource "aws_instance" "grafana_server" {
   ami                    = data.aws_ami.ubuntu_ami.id
   instance_type          = var.instance_type
   subnet_id              = var.private_subnets_ids[0]
-  vpc_security_group_ids = [aws_security_group.grafana_sg, aws_security_group.default_sg.id, aws_security_group.monitor_agent_sg.id]
+  vpc_security_group_ids = [aws_security_group.grafana_sg.id, aws_security_group.default_sg.id, aws_security_group.monitor_agent_sg.id]
   key_name               = var.aws_server_key_name
   source_dest_check      = false
   iam_instance_profile   = aws_iam_instance_profile.ec2_describe_instances_instance_profile.id
