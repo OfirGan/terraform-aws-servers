@@ -2,7 +2,7 @@
 # AMI - Ubuntu 18.04 Latest
 # IAM - Ansible -> Describe EC2 Instances, 
 # IAM - ALB write logs -> S3
-# SECURITY GROUPS - Bastion, Consul, Jenkins, Ansible, "Extra"
+# SECURITY GROUPS - Default, Monitor, Consul, Jenkins, Prometheus, Grafana, HTTP/s
 # EC2 INSTANCES - Bastion Host, Consul Servers, Jenkins Server & Nodes, Ansible Server
 # S3 BUCKET - For ALB Logs
 # APP LOAD-BALANCER - Consul, Jenkins
@@ -77,24 +77,24 @@ resource "aws_iam_instance_profile" "ec2_describe_instances_instance_profile" {
 ##################################################################################
 
 #####################################################
-# Bastion Security Group
+# Default Security Group
 #####################################################
 
-resource "aws_security_group" "bastion_sg" {
-  name        = "bastion_server_sg"
-  description = "Bastion Server Security Group"
+resource "aws_security_group" "default_sg" {
+  name        = "default-sg"
+  description = "Default Security Group"
   vpc_id      = var.vpc_id
 
   egress {
     from_port   = 0
     to_port     = 0
-    protocol    = "-1"
+    protocol    = -1
     cidr_blocks = ["0.0.0.0/0"]
   }
 
   dynamic "ingress" {
     iterator = port
-    for_each = var.bastion_ingress_ports
+    for_each = var.ssh_ingress_ports
     content {
       from_port   = port.value
       to_port     = port.value
@@ -111,29 +111,22 @@ resource "aws_security_group" "bastion_sg" {
   }
 
   tags = {
-    "Name" = "${var.project_name}-bastion-sg"
+    "Name" = "${var.project_name}-default-sg"
   }
 }
 
 #####################################################
-# Consul Security Group
+# Monitor Agent Security Group
 #####################################################
 
-resource "aws_security_group" "consul_sg" {
-  name        = "consul_sg"
-  description = "Consul servers Security Group"
+resource "aws_security_group" "monitor_agent_sg" {
+  name        = "monitor_agent_sg"
+  description = "Monitor Agent Security Group"
   vpc_id      = var.vpc_id
-
-  egress {
-    from_port   = 0
-    to_port     = 0
-    protocol    = "-1"
-    cidr_blocks = ["0.0.0.0/0"]
-  }
 
   dynamic "ingress" {
     iterator = port
-    for_each = var.consul_ingress_ports
+    for_each = var.consul_agent_ingress_ports
     content {
       from_port   = port.value
       to_port     = port.value
@@ -142,15 +135,44 @@ resource "aws_security_group" "consul_sg" {
     }
   }
 
-  ingress {
-    from_port   = 8
-    to_port     = 0
-    protocol    = "icmp"
-    cidr_blocks = ["0.0.0.0/0"]
+  dynamic "ingress" {
+    iterator = port
+    for_each = var.node_exporter_ingress_ports
+    content {
+      from_port   = port.value
+      to_port     = port.value
+      protocol    = "tcp"
+      cidr_blocks = ["0.0.0.0/0"]
+    }
   }
 
   tags = {
-    "Name" = "${var.project_name}-consul-sg"
+    "Name" = "${var.project_name}-monitor-agent-sg"
+  }
+}
+
+#####################################################
+# Consul Server Security Group
+#####################################################
+
+resource "aws_security_group" "consul_server_sg" {
+  name        = "consul_server_sg"
+  description = "Consul Server Security Group"
+  vpc_id      = var.vpc_id
+
+  dynamic "ingress" {
+    iterator = port
+    for_each = var.consul_server_ingress_ports
+    content {
+      from_port   = port.value
+      to_port     = port.value
+      protocol    = "tcp"
+      cidr_blocks = ["0.0.0.0/0"]
+    }
+  }
+
+  tags = {
+    "Name" = "${var.project_name}-consul-server-sg"
   }
 }
 
@@ -158,17 +180,10 @@ resource "aws_security_group" "consul_sg" {
 # Jenkins Security Group
 #####################################################
 
-resource "aws_security_group" "jenkins_sg" {
-  name        = "jenkins_sg"
-  description = "Jenkins Security Group"
+resource "aws_security_group" "jenkins_server_sg" {
+  name        = "jenkins_server_sg"
+  description = "Jenkins Server Security Group"
   vpc_id      = var.vpc_id
-
-  egress {
-    from_port   = 0
-    to_port     = 0
-    protocol    = "-1"
-    cidr_blocks = ["0.0.0.0/0"]
-  }
 
   dynamic "ingress" {
     iterator = port
@@ -181,37 +196,23 @@ resource "aws_security_group" "jenkins_sg" {
     }
   }
 
-  ingress {
-    from_port   = 8
-    to_port     = 0
-    protocol    = "icmp"
-    cidr_blocks = ["0.0.0.0/0"]
-  }
-
   tags = {
-    "Name" = "${var.project_name}-jenkins-sg"
+    "Name" = "${var.project_name}-jenkins-server-sg"
   }
 }
 
 #####################################################
-# Ansible Security Group
+# Prometheus Security Group
 #####################################################
 
-resource "aws_security_group" "ansible_sg" {
-  name        = "ansible_sg"
-  description = "Ansible Server Security Group"
+resource "aws_security_group" "prometheus_sg" {
+  name        = "prometheus_sg"
+  description = "Prometheus Security Group"
   vpc_id      = var.vpc_id
-
-  egress {
-    from_port   = 0
-    to_port     = 0
-    protocol    = "-1"
-    cidr_blocks = ["0.0.0.0/0"]
-  }
 
   dynamic "ingress" {
     iterator = port
-    for_each = var.ansible_ingress_ports
+    for_each = var.prometheus_ingress_ports
     content {
       from_port   = port.value
       to_port     = port.value
@@ -220,67 +221,58 @@ resource "aws_security_group" "ansible_sg" {
     }
   }
 
-  ingress {
-    from_port   = 8
-    to_port     = 0
-    protocol    = "icmp"
-    cidr_blocks = ["0.0.0.0/0"]
-  }
-
   tags = {
-    "Name" = "${var.project_name}-ansible-sg"
+    "Name" = "${var.project_name}-prometheus-sg"
   }
 }
 
 #####################################################
-# Extra Security Group
+# Grafana Security Group
 #####################################################
 
-resource "aws_security_group" "allow_any_http_in_sg" {
-  name   = "allow-any-http-in-sg"
-  vpc_id = var.vpc_id
+resource "aws_security_group" "grafana_sg" {
+  name        = "grafana_sg"
+  description = "Grafana Security Group"
+  vpc_id      = var.vpc_id
 
-  ingress {
-    cidr_blocks = ["0.0.0.0/0"]
-    from_port   = 80
-    to_port     = 80
-    protocol    = "tcp"
+  dynamic "ingress" {
+    iterator = port
+    for_each = var.grafana_ingress_ports
+    content {
+      from_port   = port.value
+      to_port     = port.value
+      protocol    = "tcp"
+      cidr_blocks = ["0.0.0.0/0"]
+    }
   }
 
   tags = {
-    "Name" = "${var.project_name}-allow-any-http-in-sg"
+    "Name" = "${var.project_name}-grafana-sg"
   }
 }
 
-resource "aws_security_group" "allow_any_ssh_in_sg" {
-  name   = "allow-any-ssh-in-sg"
-  vpc_id = var.vpc_id
+#####################################################
+# HTTP\S Agent Security Group
+#####################################################
 
-  ingress {
-    cidr_blocks = ["0.0.0.0/0"]
-    from_port   = 22
-    to_port     = 22
-    protocol    = "tcp"
+resource "aws_security_group" "http_sg" {
+  name        = "http_sg"
+  description = "HTTP Security Group"
+  vpc_id      = var.vpc_id
+
+  dynamic "ingress" {
+    iterator = port
+    for_each = var.http_ingress_ports
+    content {
+      from_port   = port.value
+      to_port     = port.value
+      protocol    = "tcp"
+      cidr_blocks = ["0.0.0.0/0"]
+    }
   }
 
   tags = {
-    "Name" = "${var.project_name}-allow-any-ssh-in-sg"
-  }
-}
-
-resource "aws_security_group" "allow_any_all_out_sg" {
-  name   = "allow-any-all-out-sg"
-  vpc_id = var.vpc_id
-
-  egress {
-    cidr_blocks = ["0.0.0.0/0"]
-    from_port   = 0
-    to_port     = 0
-    protocol    = -1
-  }
-
-  tags = {
-    "Name" = "${var.project_name}-allow-any-all-out-sg"
+    "Name" = "${var.project_name}-http-sg"
   }
 }
 
@@ -296,7 +288,7 @@ resource "aws_instance" "bastion_server" {
   ami                         = data.aws_ami.ubuntu_ami.id
   instance_type               = var.instance_type
   subnet_id                   = var.public_subnets_ids[0]
-  vpc_security_group_ids      = [aws_security_group.bastion_sg.id]
+  vpc_security_group_ids      = [aws_security_group.default_sg.id, aws_security_group.monitor_agent_sg.id]
   key_name                    = var.aws_server_key_name
   associate_public_ip_address = true
   iam_instance_profile        = aws_iam_instance_profile.ec2_describe_instances_instance_profile.id
@@ -312,7 +304,7 @@ resource "aws_instance" "consul_servers" {
   ami                    = data.aws_ami.ubuntu_ami.id
   instance_type          = var.instance_type
   subnet_id              = element(var.private_subnets_ids, count.index % length(var.private_subnets_ids))
-  vpc_security_group_ids = [aws_security_group.consul_sg.id]
+  vpc_security_group_ids = [aws_security_group.consul_server_sg.id, aws_security_group.default_sg.id, aws_security_group.monitor_agent_sg.id]
   key_name               = var.aws_server_key_name
   source_dest_check      = false
   iam_instance_profile   = aws_iam_instance_profile.ec2_describe_instances_instance_profile.id
@@ -327,7 +319,7 @@ resource "aws_instance" "jenkins_server" {
   ami                    = data.aws_ami.ubuntu_ami.id
   instance_type          = var.instance_type
   subnet_id              = var.private_subnets_ids[0]
-  vpc_security_group_ids = [aws_security_group.jenkins_sg.id]
+  vpc_security_group_ids = [aws_security_group.jenkins_server_sg.id, aws_security_group.default_sg.id, aws_security_group.monitor_agent_sg.id]
   key_name               = var.aws_server_key_name
   source_dest_check      = false
   iam_instance_profile   = aws_iam_instance_profile.ec2_describe_instances_instance_profile.id
@@ -343,7 +335,7 @@ resource "aws_instance" "jenkins_nodes" {
   ami                    = data.aws_ami.ubuntu_ami.id
   instance_type          = var.instance_type
   subnet_id              = element(var.private_subnets_ids, count.index % length(var.private_subnets_ids))
-  vpc_security_group_ids = [aws_security_group.jenkins_sg.id]
+  vpc_security_group_ids = [aws_security_group.default_sg.id, aws_security_group.monitor_agent_sg.id]
   key_name               = var.aws_server_key_name
   source_dest_check      = false
   iam_instance_profile   = aws_iam_instance_profile.ec2_describe_instances_instance_profile.id
@@ -358,7 +350,7 @@ resource "aws_instance" "ansible_server" {
   ami                    = data.aws_ami.ubuntu_ami.id
   instance_type          = var.instance_type
   subnet_id              = var.private_subnets_ids[0]
-  vpc_security_group_ids = [aws_security_group.ansible_sg.id]
+  vpc_security_group_ids = [aws_security_group.default_sg.id, aws_security_group.monitor_agent_sg.id]
   key_name               = var.aws_server_key_name
   source_dest_check      = false
   iam_instance_profile   = aws_iam_instance_profile.ec2_describe_instances_instance_profile.id
@@ -426,7 +418,7 @@ resource "aws_alb" "consul_alb" {
   name               = "consul-alb"
   internal           = false
   load_balancer_type = "application"
-  security_groups    = [aws_security_group.consul_sg.id]
+  security_groups    = [aws_security_group.http_sg.id]
   subnets            = var.public_subnets_ids
 
   access_logs {
@@ -486,7 +478,7 @@ resource "aws_alb" "jenkins_alb" {
   name               = "jenkins-alb"
   internal           = false
   load_balancer_type = "application"
-  security_groups    = [aws_security_group.jenkins_sg.id]
+  security_groups    = [aws_security_group.http_sg.id]
   subnets            = var.public_subnets_ids
 
   access_logs {

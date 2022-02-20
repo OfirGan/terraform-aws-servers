@@ -50,28 +50,53 @@ variable "jenkins_nodes_count" {
 ##################################################################################
 # Security Groups Ports
 ##################################################################################
-variable "bastion_ingress_ports" {
+variable "ssh_ingress_ports" {
   type        = list(number)
-  description = "Bastion host ingress ports list"
+  description = "HTTP ingress ports"
   default     = [22]
 }
 
-variable "consul_ingress_ports" {
+variable "http_ingress_ports" {
+  type        = list(number)
+  description = "HTTP ingress ports"
+  default     = [80, 443]
+}
+
+
+variable "consul_agent_ingress_ports" {
   type        = list(number)
   description = "Consul ingress ports list"
-  default     = [8600, 8500, 8300, 8301, 8302, 22, 80]
+  default     = [8301, 8302]
+}
+
+variable "consul_server_ingress_ports" {
+  type        = list(number)
+  description = "Consul ingress ports list"
+  default     = [8600, 8500, 8300, 8301, 8302]
 }
 
 variable "jenkins_ingress_ports" {
   type        = list(number)
   description = "Jenkins ingress ports list"
-  default     = [49187, 80, 8080, 22]
+  default     = [49187, 8080]
 }
 
-variable "ansible_ingress_ports" {
+variable "node_exporter_ingress_ports" {
+  type        = list(string)
+  description = "Node Exporter ingress ports"
+  default     = [9100]
+}
+
+variable "prometheus_ingress_ports" {
   type        = list(number)
-  description = "Ansible host ingress ports list"
-  default     = [80, 8080, 22]
+  description = "Prometheus ingress ports"
+  default     = [9090]
+}
+
+variable "grafana_ingress_ports" {
+  type        = list(number)
+  description = "Grafana ingress ports"
+  default     = [3000]
 }
 
 ##################################################################################
