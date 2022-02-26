@@ -124,3 +124,17 @@ variable "servers_tags_structure" {
 variable "aws_server_key_name" {
   description = "AWS EC2 Key pair Name"
 }
+
+variable "alb_certificate" {
+  description = "Certificate PEM"
+}
+
+variable "alb_certificate_private_key" {
+  description = "Certificate Private Key PEM"
+}
+
+variable "ssl_security_policy" {
+  description = "SSL Security Policy"
+  type        = string
+  default     = "ELBSecurityPolicy-FS-1-2-Res-2020-10"
+}

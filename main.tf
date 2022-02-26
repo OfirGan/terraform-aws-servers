@@ -73,6 +73,16 @@ resource "aws_iam_instance_profile" "ec2_describe_instances_instance_profile" {
 }
 
 ##################################################################################
+# IAM - Server Certificate
+##################################################################################
+
+resource "aws_iam_server_certificate" "kandula_ssl_cert" {
+  name             = "kandula_ssl_cert"
+  certificate_body = var.alb_certificate
+  private_key      = var.alb_certificate_private_key
+}
+
+##################################################################################
 # SECURITY GROUPS
 ##################################################################################
 
@@ -490,13 +500,29 @@ resource "aws_alb_target_group" "consul_alb_tg" {
   }
 }
 
-resource "aws_alb_listener" "consul_alb_listener" {
+resource "aws_alb_listener" "consul_https_alb_listener" {
+  load_balancer_arn = aws_alb.consul_alb.arn
+  port              = "443"
+  protocol          = "HTTPS"
+  ssl_policy        = var.ssl_security_policy
+  certificate_arn   = aws_iam_server_certificate.kandula_ssl_cert
+  default_action {
+    type             = "forward"
+    target_group_arn = aws_alb_target_group.consul_alb_tg.arn
+  }
+}
+
+resource "aws_alb_listener" "consul_http_alb_listener" {
   load_balancer_arn = aws_alb.consul_alb.arn
   port              = "80"
   protocol          = "HTTP"
   default_action {
-    type             = "forward"
-    target_group_arn = aws_alb_target_group.consul_alb_tg.arn
+    type = "redirect"
+    redirect {
+      port        = "443"
+      protocol    = "HTTPS"
+      status_code = "HTTP_301"
+    }
   }
 }
 
@@ -602,7 +628,7 @@ resource "aws_alb_target_group" "prometheus_alb_tg" {
   health_check {
     port                = 9090
     protocol            = "HTTP"
-    path                = "/login"
+    path                = "/status"
     healthy_threshold   = 2
     unhealthy_threshold = 2
     timeout             = 3
@@ -662,7 +688,7 @@ resource "aws_alb_target_group" "grafana_alb_tg" {
   health_check {
     port                = 3000
     protocol            = "HTTP"
-    path                = "/login"
+    path                = "/api/health"
     healthy_threshold   = 2
     unhealthy_threshold = 2
     timeout             = 3
