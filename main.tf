@@ -1,6 +1,5 @@
 ##################################################################################
 # AMI - Ubuntu 18.04 Latest
-# IAM - Ansible -> Describe EC2 Instances, 
 # IAM - ALB write logs -> S3
 # SECURITY GROUPS - Default, Monitor, Consul, Jenkins, Prometheus, Grafana, HTTP/s
 # EC2 INSTANCES - Bastion Host, Consul Servers, Jenkins Server & Nodes, Ansible Server, Prometheus, Grafana
@@ -20,66 +19,6 @@ data "aws_ami" "ubuntu_ami" {
     name   = "name"
     values = ["ubuntu/images/hvm-ssd/ubuntu-bionic-18.04-amd64-server*"]
   }
-}
-
-##################################################################################
-# IAM - Describe EC2 Instances
-##################################################################################
-
-resource "aws_iam_role" "ec2_describe_instances_role" {
-  name = "ec2_describe_instances_role"
-  assume_role_policy = jsonencode({
-    Version = "2012-10-17"
-    Statement = [
-      {
-        Action = "sts:AssumeRole"
-        Effect = "Allow"
-        Sid    = ""
-        Principal = {
-          Service = "ec2.amazonaws.com"
-        }
-      },
-    ]
-  })
-}
-
-resource "aws_iam_policy" "ec2_describe_instances_policy" {
-  name = "ec2_describe_instances_policy"
-  policy = jsonencode({
-    "Version" : "2012-10-17",
-    "Statement" : [
-      {
-        "Effect" : "Allow",
-        "Action" : [
-          "ec2:Describe*",
-          "sts:AssumeRole",
-          "eks:DescribeCluster"
-        ],
-        "Resource" : "*"
-      }
-    ]
-  })
-}
-
-resource "aws_iam_policy_attachment" "ec2_describe_instances_policy_attachment" {
-  name       = "ec2_describe_instances_policy_attachment"
-  roles      = [resource.aws_iam_role.ec2_describe_instances_role.name]
-  policy_arn = resource.aws_iam_policy.ec2_describe_instances_policy.arn
-}
-
-resource "aws_iam_instance_profile" "ec2_describe_instances_instance_profile" {
-  name = "ec2_describe_instances_instance_profile"
-  role = resource.aws_iam_role.ec2_describe_instances_role.name
-}
-
-##################################################################################
-# IAM - Server Certificate
-##################################################################################
-
-resource "aws_iam_server_certificate" "kandula_ssl_cert" {
-  name             = "kandula_ssl_cert"
-  certificate_body = var.alb_certificate
-  private_key      = var.alb_certificate_private_key
 }
 
 ##################################################################################
@@ -301,7 +240,7 @@ resource "aws_instance" "bastion_server" {
   vpc_security_group_ids      = [aws_security_group.default_sg.id, aws_security_group.monitor_agent_sg.id]
   key_name                    = var.aws_server_key_name
   associate_public_ip_address = true
-  iam_instance_profile        = aws_iam_instance_profile.ec2_describe_instances_instance_profile.id
+  iam_instance_profile        = var.ec2_describe_instances_instance_profile_id
   tags                        = zipmap(var.servers_tags_structure, ["bastion", "bastion", "server", "Bastion-Server", "public", "${var.project_name}", "${var.owner_name}", "true", "ubuntu"])
 }
 
@@ -317,7 +256,7 @@ resource "aws_instance" "consul_servers" {
   vpc_security_group_ids = [aws_security_group.consul_server_sg.id, aws_security_group.default_sg.id, aws_security_group.monitor_agent_sg.id]
   key_name               = var.aws_server_key_name
   source_dest_check      = false
-  iam_instance_profile   = aws_iam_instance_profile.ec2_describe_instances_instance_profile.id
+  iam_instance_profile   = var.ec2_describe_instances_instance_profile_id
   tags                   = zipmap(var.servers_tags_structure, ["consul", "service_discovery", "server", "Consul-Server-${count.index + 1}", "private", "${var.project_name}", "${var.owner_name}", "true", "ubuntu"])
 }
 
@@ -332,7 +271,7 @@ resource "aws_instance" "jenkins_server" {
   vpc_security_group_ids = [aws_security_group.jenkins_server_sg.id, aws_security_group.default_sg.id, aws_security_group.monitor_agent_sg.id]
   key_name               = var.aws_server_key_name
   source_dest_check      = false
-  iam_instance_profile   = aws_iam_instance_profile.ec2_describe_instances_instance_profile.id
+  iam_instance_profile   = var.ec2_describe_instances_instance_profile_id
   tags                   = zipmap(var.servers_tags_structure, ["jenkins", "cicd", "server", "Jenkins-Server", "private", "${var.project_name}", "${var.owner_name}", "true", "ubuntu"])
 }
 
@@ -348,7 +287,7 @@ resource "aws_instance" "jenkins_nodes" {
   vpc_security_group_ids = [aws_security_group.default_sg.id, aws_security_group.monitor_agent_sg.id]
   key_name               = var.aws_server_key_name
   source_dest_check      = false
-  iam_instance_profile   = aws_iam_instance_profile.ec2_describe_instances_instance_profile.id
+  iam_instance_profile   = var.ec2_describe_instances_instance_profile_id
   tags                   = zipmap(var.servers_tags_structure, ["jenkins", "service_discovery", "node", "Jenkins-Node-${count.index + 1}", "private", "${var.project_name}", "${var.owner_name}", "true", "ubuntu"])
 }
 
@@ -363,7 +302,7 @@ resource "aws_instance" "ansible_server" {
   vpc_security_group_ids = [aws_security_group.default_sg.id, aws_security_group.monitor_agent_sg.id]
   key_name               = var.aws_server_key_name
   source_dest_check      = false
-  iam_instance_profile   = aws_iam_instance_profile.ec2_describe_instances_instance_profile.id
+  iam_instance_profile   = var.ec2_describe_instances_instance_profile_id
   tags                   = zipmap(var.servers_tags_structure, ["ansible", "configuration_management", "server", "Ansible-Server", "private", "${var.project_name}", "${var.owner_name}", "true", "ubuntu"])
 }
 
@@ -378,7 +317,7 @@ resource "aws_instance" "prometheus_server" {
   vpc_security_group_ids = [aws_security_group.prometheus_sg.id, aws_security_group.default_sg.id, aws_security_group.monitor_agent_sg.id]
   key_name               = var.aws_server_key_name
   source_dest_check      = false
-  iam_instance_profile   = aws_iam_instance_profile.ec2_describe_instances_instance_profile.id
+  iam_instance_profile   = var.ec2_describe_instances_instance_profile_id
   tags                   = zipmap(var.servers_tags_structure, ["prometheus", "monitoring", "server", "Prometheus-Server", "private", "${var.project_name}", "${var.owner_name}", "true", "ubuntu"])
 }
 
@@ -393,7 +332,7 @@ resource "aws_instance" "grafana_server" {
   vpc_security_group_ids = [aws_security_group.grafana_sg.id, aws_security_group.default_sg.id, aws_security_group.monitor_agent_sg.id]
   key_name               = var.aws_server_key_name
   source_dest_check      = false
-  iam_instance_profile   = aws_iam_instance_profile.ec2_describe_instances_instance_profile.id
+  iam_instance_profile   = var.ec2_describe_instances_instance_profile_id
   tags                   = zipmap(var.servers_tags_structure, ["grafana", "monitoring", "server", "Grafana-Server", "private", "${var.project_name}", "${var.owner_name}", "true", "ubuntu"])
 }
 
@@ -505,7 +444,7 @@ resource "aws_alb_listener" "consul_https_alb_listener" {
   port              = "443"
   protocol          = "HTTPS"
   ssl_policy        = var.ssl_security_policy
-  certificate_arn   = aws_iam_server_certificate.kandula_ssl_cert.arn
+  certificate_arn   = var.aws_iam_server_certificate_arn
   default_action {
     type             = "forward"
     target_group_arn = aws_alb_target_group.consul_alb_tg.arn

@@ -51,8 +51,3 @@ output "jenkins_alb_public_dns" {
   description = "Jenkins ALB Public DNS name"
   value       = aws_alb.jenkins_alb.dns_name
 }
-
-output "iam_role_arn" {
-  description = "Describe Instances Role ARN"
-  value       = aws_iam_role.ec2_describe_instances_role.arn
-}

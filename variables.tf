@@ -125,16 +125,22 @@ variable "aws_server_key_name" {
   description = "AWS EC2 Key pair Name"
 }
 
-variable "alb_certificate" {
-  description = "Certificate PEM"
-}
-
-variable "alb_certificate_private_key" {
-  description = "Certificate Private Key PEM"
+##################################################################################
+# Certificate
+##################################################################################
+variable "aws_iam_server_certificate_arn" {
+  description = "AWS IAM Server Certificate ARN For ALBs"
 }
 
 variable "ssl_security_policy" {
   description = "SSL Security Policy"
   type        = string
   default     = "ELBSecurityPolicy-FS-1-2-Res-2020-10"
+}
+
+##################################################################################
+# IAM
+##################################################################################
+variable "ec2_describe_instances_instance_profile_id" {
+  description = "EC2 Describe Instances Instance Profile ID"
 }
