@@ -515,13 +515,29 @@ resource "aws_alb_target_group" "jenkins_alb_tg" {
   }
 }
 
-resource "aws_alb_listener" "jenkins_alb_listener" {
+resource "aws_alb_listener" "jenkins_https_alb_listener" {
+  load_balancer_arn = aws_alb.jenkins_alb.arn
+  port              = "443"
+  protocol          = "HTTPS"
+  ssl_policy        = var.ssl_security_policy
+  certificate_arn   = var.aws_iam_server_certificate_arn
+  default_action {
+    type             = "forward"
+    target_group_arn = aws_alb_target_group.jenkins_alb_tg.arn
+  }
+}
+
+resource "aws_alb_listener" "jenkins_http_alb_listener" {
   load_balancer_arn = aws_alb.jenkins_alb.arn
   port              = "80"
   protocol          = "HTTP"
   default_action {
-    type             = "forward"
-    target_group_arn = aws_alb_target_group.jenkins_alb_tg.arn
+    type = "redirect"
+    redirect {
+      port        = "443"
+      protocol    = "HTTPS"
+      status_code = "HTTP_301"
+    }
   }
 }
 
@@ -567,7 +583,7 @@ resource "aws_alb_target_group" "prometheus_alb_tg" {
   health_check {
     port                = 9090
     protocol            = "HTTP"
-    path                = "/status"
+    path                = "/-/healthy"
     healthy_threshold   = 2
     unhealthy_threshold = 2
     timeout             = 3
@@ -575,13 +591,29 @@ resource "aws_alb_target_group" "prometheus_alb_tg" {
   }
 }
 
-resource "aws_alb_listener" "prometheus_alb_listener" {
+resource "aws_alb_listener" "prometheus_https_alb_listener" {
+  load_balancer_arn = aws_alb.prometheus_alb.arn
+  port              = "443"
+  protocol          = "HTTPS"
+  ssl_policy        = var.ssl_security_policy
+  certificate_arn   = var.aws_iam_server_certificate_arn
+  default_action {
+    type             = "forward"
+    target_group_arn = aws_alb_target_group.prometheus_alb_tg.arn
+  }
+}
+
+resource "aws_alb_listener" "prometheus_http_alb_listener" {
   load_balancer_arn = aws_alb.prometheus_alb.arn
   port              = "80"
   protocol          = "HTTP"
   default_action {
-    type             = "forward"
-    target_group_arn = aws_alb_target_group.prometheus_alb_tg.arn
+    type = "redirect"
+    redirect {
+      port        = "443"
+      protocol    = "HTTPS"
+      status_code = "HTTP_301"
+    }
   }
 }
 
@@ -635,12 +667,28 @@ resource "aws_alb_target_group" "grafana_alb_tg" {
   }
 }
 
-resource "aws_alb_listener" "grafana_alb_listener" {
+resource "aws_alb_listener" "grafana_https_alb_listener" {
+  load_balancer_arn = aws_alb.grafana_alb.arn
+  port              = "443"
+  protocol          = "HTTPS"
+  ssl_policy        = var.ssl_security_policy
+  certificate_arn   = var.aws_iam_server_certificate_arn
+  default_action {
+    type             = "forward"
+    target_group_arn = aws_alb_target_group.grafana_alb_tg.arn
+  }
+}
+
+resource "aws_alb_listener" "grafana_http_alb_listener" {
   load_balancer_arn = aws_alb.grafana_alb.arn
   port              = "80"
   protocol          = "HTTP"
   default_action {
-    type             = "forward"
-    target_group_arn = aws_alb_target_group.grafana_alb_tg.arn
+    type = "redirect"
+    redirect {
+      port        = "443"
+      protocol    = "HTTPS"
+      status_code = "HTTP_301"
+    }
   }
 }
