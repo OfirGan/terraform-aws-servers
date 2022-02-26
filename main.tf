@@ -505,7 +505,7 @@ resource "aws_alb_listener" "consul_https_alb_listener" {
   port              = "443"
   protocol          = "HTTPS"
   ssl_policy        = var.ssl_security_policy
-  certificate_arn   = aws_iam_server_certificate.kandula_ssl_cert
+  certificate_arn   = aws_iam_server_certificate.kandula_ssl_cert.arn
   default_action {
     type             = "forward"
     target_group_arn = aws_alb_target_group.consul_alb_tg.arn
