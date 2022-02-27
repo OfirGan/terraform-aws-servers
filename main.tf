@@ -1,10 +1,11 @@
 ##################################################################################
 # AMI - Ubuntu 18.04 Latest
 # IAM - ALB write logs -> S3
-# SECURITY GROUPS - Default, Monitor, Consul, Jenkins, Prometheus, Grafana, HTTP/s
-# EC2 INSTANCES - Bastion Host, Consul Servers, Jenkins Server & Nodes, Ansible Server, Prometheus, Grafana
+# SECURITY GROUPS - Default, Monitor, Consul, Jenkins, Prometheus, Grafana, Elk, HTTP/s
+# EC2 INSTANCES - Bastion Host, Consul Servers, Jenkins Server & Nodes, Ansible Server, 
+#                 Prometheus, Grafana, Elk
 # S3 BUCKET - For ALB Logs
-# APP LOAD-BALANCER - Consul, Jenkins, Prometheus, Grafana
+# APP LOAD-BALANCER - Consul, Jenkins, Prometheus, Grafana, Elk
 ##################################################################################
 
 ##################################################################################
@@ -201,6 +202,31 @@ resource "aws_security_group" "grafana_sg" {
 }
 
 #####################################################
+# Elasticsearch & Kibana Security Group
+#####################################################
+
+resource "aws_security_group" "elk_servers_sg" {
+  name        = "elk_servers_sg"
+  description = "Elasticsearch And Kibana Security Group"
+  vpc_id      = var.vpc_id
+
+  dynamic "ingress" {
+    iterator = port
+    for_each = var.elk_ingress_ports
+    content {
+      from_port   = port.value
+      to_port     = port.value
+      protocol    = "tcp"
+      cidr_blocks = ["0.0.0.0/0"]
+    }
+  }
+
+  tags = {
+    "Name" = "${var.project_name}-elk-sg"
+  }
+}
+
+#####################################################
 # HTTP\S Agent Security Group
 #####################################################
 
@@ -334,6 +360,20 @@ resource "aws_instance" "grafana_server" {
   source_dest_check      = false
   iam_instance_profile   = var.ec2_describe_instances_instance_profile_id
   tags                   = zipmap(var.servers_tags_structure, ["grafana", "monitoring", "server", "Grafana-Server", "private", "${var.project_name}", "${var.owner_name}", "true", "ubuntu"])
+}
+
+#####################################################
+# Elasticsearch & Kibana Server
+#####################################################
+resource "aws_instance" "elk_server" {
+  ami                    = data.aws_ami.ubuntu.id
+  instance_type          = "t3.small"
+  subnet_id              = var.private_subnets_ids[0]
+  vpc_security_group_ids = [aws_security_group.elk_servers_sg.id, aws_security_group.default_sg.id, aws_security_group.monitor_agent_sg.id]
+  key_name               = var.aws_server_key_name
+  source_dest_check      = false
+  iam_instance_profile   = var.ec2_describe_instances_instance_profile_id
+  tags                   = zipmap(var.servers_tags_structure, ["elk", "logging", "server", "ELK-Server", "private", "${var.project_name}", "${var.owner_name}", "true", "ubuntu"])
 }
 
 ##################################################################################
@@ -681,6 +721,82 @@ resource "aws_alb_listener" "grafana_https_alb_listener" {
 
 resource "aws_alb_listener" "grafana_http_alb_listener" {
   load_balancer_arn = aws_alb.grafana_alb.arn
+  port              = "80"
+  protocol          = "HTTP"
+  default_action {
+    type = "redirect"
+    redirect {
+      port        = "443"
+      protocol    = "HTTPS"
+      status_code = "HTTP_301"
+    }
+  }
+}
+
+#####################################################
+# Elasticsearch & Kibana Server ALB
+#####################################################
+
+resource "aws_alb" "elk_alb" {
+  name               = "elk-alb"
+  internal           = false
+  load_balancer_type = "application"
+  security_groups    = [aws_security_group.http_sg.id]
+  subnets            = var.public_subnets_ids
+
+  access_logs {
+    bucket  = resource.aws_s3_bucket.s3_logs_bucket.bucket
+    prefix  = "logs/elk-alb"
+    enabled = true
+  }
+
+  tags = {
+    Name = "${var.project_name}-elk-alb"
+  }
+}
+
+resource "aws_alb_target_group_attachment" "elk_server_alb_attach" {
+  target_group_arn = aws_alb_target_group.elk_alb_tg.arn
+  target_id        = aws_instance.elk_server.id
+  port             = 5601
+}
+
+
+resource "aws_alb_target_group" "elk_alb_tg" {
+  name     = "elk-alb-tg"
+  port     = 80
+  protocol = "HTTP"
+  vpc_id   = var.vpc_id
+  stickiness {
+    type            = "lb_cookie"
+    cookie_duration = 60
+    enabled         = true
+  }
+  health_check {
+    port                = 5601
+    protocol            = "HTTP"
+    path                = "/status"
+    healthy_threshold   = 2
+    unhealthy_threshold = 2
+    timeout             = 3
+    interval            = 10
+  }
+}
+
+resource "aws_alb_listener" "elk_https_alb_listener" {
+  load_balancer_arn = aws_alb.elk_alb.arn
+  port              = "443"
+  protocol          = "HTTPS"
+  ssl_policy        = var.ssl_security_policy
+  certificate_arn   = var.aws_iam_server_certificate_arn
+  default_action {
+    type             = "forward"
+    target_group_arn = aws_alb_target_group.elk_alb_tg.arn
+  }
+}
+
+resource "aws_alb_listener" "elk_http_alb_listener" {
+  load_balancer_arn = aws_alb.elk_alb.arn
   port              = "80"
   protocol          = "HTTP"
   default_action {
