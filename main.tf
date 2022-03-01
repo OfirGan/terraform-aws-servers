@@ -366,7 +366,7 @@ resource "aws_instance" "grafana_server" {
 # Elasticsearch & Kibana Server
 #####################################################
 resource "aws_instance" "elk_server" {
-  ami                    = data.aws_ami.ubuntu.id
+  ami                    = data.aws_ami.ubuntu_ami.id
   instance_type          = "t3.small"
   subnet_id              = var.private_subnets_ids[0]
   vpc_security_group_ids = [aws_security_group.elk_servers_sg.id, aws_security_group.default_sg.id, aws_security_group.monitor_agent_sg.id]
