@@ -56,9 +56,9 @@ variable "ssh_ingress_ports" {
   default     = [22]
 }
 
-variable "http_ingress_ports" {
+variable "http_ports" {
   type        = list(number)
-  description = "HTTP ingress ports"
+  description = "HTTP/S ports"
   default     = [80, 443]
 }
 
