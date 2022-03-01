@@ -44,7 +44,7 @@ resource "aws_security_group" "default_sg" {
 
   dynamic "ingress" {
     iterator = port
-    for_each = var.ssh_ingress_ports
+    for_each = var.ssh_ports
     content {
       from_port   = port.value
       to_port     = port.value
@@ -76,7 +76,7 @@ resource "aws_security_group" "monitor_agent_sg" {
 
   dynamic "ingress" {
     iterator = port
-    for_each = var.consul_agent_ingress_ports
+    for_each = var.consul_agent_ports
     content {
       from_port   = port.value
       to_port     = port.value
@@ -87,7 +87,7 @@ resource "aws_security_group" "monitor_agent_sg" {
 
   dynamic "ingress" {
     iterator = port
-    for_each = var.node_exporter_ingress_ports
+    for_each = var.node_exporter_ports
     content {
       from_port   = port.value
       to_port     = port.value
@@ -112,7 +112,7 @@ resource "aws_security_group" "consul_server_sg" {
 
   dynamic "ingress" {
     iterator = port
-    for_each = var.consul_server_ingress_ports
+    for_each = var.consul_server_ports
     content {
       from_port   = port.value
       to_port     = port.value
@@ -137,7 +137,7 @@ resource "aws_security_group" "jenkins_server_sg" {
 
   dynamic "ingress" {
     iterator = port
-    for_each = var.jenkins_ingress_ports
+    for_each = var.jenkins_ports
     content {
       from_port   = port.value
       to_port     = port.value
@@ -162,7 +162,7 @@ resource "aws_security_group" "prometheus_sg" {
 
   dynamic "ingress" {
     iterator = port
-    for_each = var.prometheus_ingress_ports
+    for_each = var.prometheus_ports
     content {
       from_port   = port.value
       to_port     = port.value
@@ -187,7 +187,7 @@ resource "aws_security_group" "grafana_sg" {
 
   dynamic "ingress" {
     iterator = port
-    for_each = var.grafana_ingress_ports
+    for_each = var.grafana_ports
     content {
       from_port   = port.value
       to_port     = port.value
@@ -212,7 +212,7 @@ resource "aws_security_group" "elk_servers_sg" {
 
   dynamic "ingress" {
     iterator = port
-    for_each = var.elk_ingress_ports
+    for_each = var.elk_ports
     content {
       from_port   = port.value
       to_port     = port.value
@@ -244,7 +244,7 @@ resource "aws_security_group" "http_sg" {
 
   dynamic "ingress" {
     iterator = port
-    for_each = var.http_ingress_ports
+    for_each = var.http_ports
     content {
       from_port   = port.value
       to_port     = port.value

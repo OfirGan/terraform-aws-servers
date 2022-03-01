@@ -50,9 +50,9 @@ variable "jenkins_nodes_count" {
 ##################################################################################
 # Security Groups Ports
 ##################################################################################
-variable "ssh_ingress_ports" {
+variable "ssh_ports" {
   type        = list(number)
-  description = "HTTP ingress ports"
+  description = "HTTP ports"
   default     = [22]
 }
 
@@ -63,45 +63,45 @@ variable "http_ports" {
 }
 
 
-variable "consul_agent_ingress_ports" {
+variable "consul_agent_ports" {
   type        = list(number)
-  description = "Consul ingress ports list"
+  description = "Consul ports list"
   default     = [8301, 8302]
 }
 
-variable "consul_server_ingress_ports" {
+variable "consul_server_ports" {
   type        = list(number)
-  description = "Consul ingress ports list"
+  description = "Consul ports list"
   default     = [8600, 8500, 8300, 8301, 8302]
 }
 
-variable "jenkins_ingress_ports" {
+variable "jenkins_ports" {
   type        = list(number)
-  description = "Jenkins ingress ports list"
+  description = "Jenkins ports list"
   default     = [49187, 8080]
 }
 
-variable "node_exporter_ingress_ports" {
+variable "node_exporter_ports" {
   type        = list(string)
-  description = "Node Exporter ingress ports"
+  description = "Node Exporter ports"
   default     = [9100]
 }
 
-variable "prometheus_ingress_ports" {
+variable "prometheus_ports" {
   type        = list(number)
-  description = "Prometheus ingress ports"
+  description = "Prometheus ports"
   default     = [9090]
 }
 
-variable "grafana_ingress_ports" {
+variable "grafana_ports" {
   type        = list(number)
-  description = "Grafana ingress ports"
+  description = "Grafana ports"
   default     = [3000]
 }
 
-variable "elk_ingress_ports" {
+variable "elk_ports" {
   type        = list(number)
-  description = "ELK ingress ports"
+  description = "ELK ports"
   default     = [5601, 9200, 9300]
 }
 
