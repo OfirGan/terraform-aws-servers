@@ -66,13 +66,19 @@ variable "http_ports" {
 variable "consul_agent_ports" {
   type        = list(number)
   description = "Consul ports list"
-  default     = [8301, 8302]
+  default     = [8301, 8302, 8600]
 }
 
-variable "consul_server_ports" {
+variable "consul_server_udp_ports" {
   type        = list(number)
   description = "Consul ports list"
-  default     = [8600, 8500, 8300, 8301, 8302]
+  default     = [8301, 8302, 8600]
+}
+
+variable "consul_server_tcp_ports" {
+  type        = list(number)
+  description = "Consul ports list"
+  default     = [8300, 8301, 8302, 8500, 8600]
 }
 
 variable "jenkins_ports" {

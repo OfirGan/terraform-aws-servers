@@ -87,6 +87,17 @@ resource "aws_security_group" "monitor_agent_sg" {
 
   dynamic "ingress" {
     iterator = port
+    for_each = var.consul_agent_ports
+    content {
+      from_port   = port.value
+      to_port     = port.value
+      protocol    = "udp"
+      cidr_blocks = ["0.0.0.0/0"]
+    }
+  }
+
+  dynamic "ingress" {
+    iterator = port
     for_each = var.node_exporter_ports
     content {
       from_port   = port.value
@@ -112,11 +123,22 @@ resource "aws_security_group" "consul_server_sg" {
 
   dynamic "ingress" {
     iterator = port
-    for_each = var.consul_server_ports
+    for_each = var.consul_server_tcp_ports
     content {
       from_port   = port.value
       to_port     = port.value
       protocol    = "tcp"
+      cidr_blocks = ["0.0.0.0/0"]
+    }
+  }
+
+  dynamic "ingress" {
+    iterator = port
+    for_each = var.consul_server_udp_ports
+    content {
+      from_port   = port.value
+      to_port     = port.value
+      protocol    = "udp"
       cidr_blocks = ["0.0.0.0/0"]
     }
   }
