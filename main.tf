@@ -343,7 +343,7 @@ resource "aws_instance" "jenkins_nodes" {
   key_name               = var.aws_server_key_name
   source_dest_check      = false
   iam_instance_profile   = var.ec2_describe_instances_instance_profile_id
-  tags                   = zipmap(var.servers_tags_structure, ["jenkins", "service_discovery", "node", "Jenkins-Node-${count.index + 1}", "private", "${var.project_name}", "${var.owner_name}", "true", "ubuntu"])
+  tags                   = zipmap(var.servers_tags_structure, ["jenkins", "cicd", "node", "Jenkins-Node-${count.index + 1}", "private", "${var.project_name}", "${var.owner_name}", "true", "ubuntu"])
 }
 
 #####################################################
