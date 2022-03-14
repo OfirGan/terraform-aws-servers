@@ -6,6 +6,7 @@
 #                 Prometheus, Grafana, Elk
 # S3 BUCKET - For ALB Logs
 # APP LOAD-BALANCER - Consul, Jenkins, Prometheus, Grafana, Elk
+# Route53 Records
 ##################################################################################
 
 ##################################################################################
@@ -836,4 +837,74 @@ resource "aws_alb_listener" "elk_http_alb_listener" {
       status_code = "HTTP_301"
     }
   }
+}
+
+
+##################################################################################
+# Route53 Records
+##################################################################################
+
+resource "aws_route53_record" "bastion_server" {
+  zone_id = var.route53_zone_zone_id
+  name    = "bastion.kandula"
+  type    = "A"
+  ttl     = "300"
+  records = ["${aws_instance.bastion_server.private_ip}"]
+}
+
+resource "aws_route53_record" "ansible_server" {
+  zone_id = var.route53_zone_zone_id
+  name    = "ansible.kandula"
+  type    = "A"
+  ttl     = "300"
+  records = ["${aws_instance.ansible_server.private_ip}"]
+}
+
+resource "aws_route53_record" "consul_servers" {
+  count   = length(aws_instance.consul_servers)
+  zone_id = var.route53_zone_zone_id
+  name    = "consul${count.index}.kandula"
+  type    = "A"
+  ttl     = "300"
+  records = ["${aws_instance.consul_servers[count.index].private_ip}"]
+}
+
+resource "aws_route53_record" "jenkins_server" {
+  zone_id = var.route53_zone_zone_id
+  name    = "jenkins.kandula"
+  type    = "A"
+  ttl     = "300"
+  records = ["${aws_instance.jenkins_server.private_ip}"]
+}
+resource "aws_route53_record" "jenkins_nodes" {
+  count   = length(aws_instance.jenkins_nodes)
+  zone_id = var.route53_zone_zone_id
+  name    = "jenkins${count.index}.kandula"
+  type    = "A"
+  ttl     = "300"
+  records = ["${aws_instance.jenkins_nodes[count.index].private_ip}"]
+}
+
+resource "aws_route53_record" "prometheus_server" {
+  zone_id = var.route53_zone_zone_id
+  name    = "prometheus.kandula"
+  type    = "A"
+  ttl     = "300"
+  records = ["${aws_instance.prometheus_server.private_ip}"]
+}
+
+resource "aws_route53_record" "grafana_server" {
+  zone_id = var.route53_zone_zone_id
+  name    = "grafana.kandula"
+  type    = "A"
+  ttl     = "300"
+  records = ["${aws_instance.grafana_server.private_ip}"]
+}
+
+resource "aws_route53_record" "elk_server" {
+  zone_id = var.route53_zone_zone_id
+  name    = "elk.kandula"
+  type    = "A"
+  ttl     = "300"
+  records = ["${aws_instance.elk_server.private_ip}"]
 }

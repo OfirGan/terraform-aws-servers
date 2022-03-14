@@ -6,6 +6,11 @@ variable "vpc_id" {
   type        = string
 }
 
+variable "route53_zone_zone_id" {
+  description = "Route53 Zone Zone_ID"
+  type        = string
+}
+
 variable "public_subnets_ids" {
   description = "Public Subnet Ids"
   type        = list(string)
