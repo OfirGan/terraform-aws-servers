@@ -863,7 +863,7 @@ resource "aws_route53_record" "ansible_server" {
 resource "aws_route53_record" "consul_servers" {
   count   = length(aws_instance.consul_servers)
   zone_id = var.route53_zone_zone_id
-  name    = "consul${count.index}.kandula"
+  name    = "consul${count.index + 1}.kandula"
   type    = "A"
   ttl     = "300"
   records = ["${aws_instance.consul_servers[count.index].private_ip}"]
@@ -879,7 +879,7 @@ resource "aws_route53_record" "jenkins_server" {
 resource "aws_route53_record" "jenkins_nodes" {
   count   = length(aws_instance.jenkins_nodes)
   zone_id = var.route53_zone_zone_id
-  name    = "jenkins${count.index}.kandula"
+  name    = "jenkins-n${count.index + 1}.kandula"
   type    = "A"
   ttl     = "300"
   records = ["${aws_instance.jenkins_nodes[count.index].private_ip}"]
