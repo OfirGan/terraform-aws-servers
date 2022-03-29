@@ -117,6 +117,42 @@ resource "aws_security_group" "monitor_agent_sg" {
 # Consul Server Security Group
 #####################################################
 
+resource "aws_security_group" "openvpn_sg" {
+  name        = "openvpn_sg"
+  description = "OpenVPN Security Group"
+  vpc_id      = var.vpc_id
+
+  dynamic "ingress" {
+    iterator = port
+    for_each = var.openvpn_tcp_ports
+    content {
+      from_port   = port.value
+      to_port     = port.value
+      protocol    = "tcp"
+      cidr_blocks = ["0.0.0.0/0"]
+    }
+  }
+
+  dynamic "ingress" {
+    iterator = port
+    for_each = var.openvpn_udp_ports
+    content {
+      from_port   = port.value
+      to_port     = port.value
+      protocol    = "udp"
+      cidr_blocks = ["0.0.0.0/0"]
+    }
+  }
+
+  tags = {
+    "Name" = "${var.project_name}-openvpn-sg"
+  }
+}
+
+#####################################################
+# Consul Server Security Group
+#####################################################
+
 resource "aws_security_group" "consul_server_sg" {
   name        = "consul_server_sg"
   description = "Consul Server Security Group"
@@ -293,7 +329,7 @@ resource "aws_instance" "bastion_server" {
   ami                         = data.aws_ami.ubuntu_ami.id
   instance_type               = var.instance_type
   subnet_id                   = var.public_subnets_ids[0]
-  vpc_security_group_ids      = [aws_security_group.default_sg.id, aws_security_group.monitor_agent_sg.id]
+  vpc_security_group_ids      = [aws_security_group.default_sg.id, aws_security_group.monitor_agent_sg.id, aws_security_group.openvpn_sg.id]
   key_name                    = var.aws_server_key_name
   associate_public_ip_address = true
   iam_instance_profile        = var.ec2_describe_instances_instance_profile_id

@@ -61,12 +61,23 @@ variable "ssh_ports" {
   default     = [22]
 }
 
+variable "openvpn_tcp_ports" {
+  type        = list(number)
+  description = "OpenVPN TCP ports list"
+  default     = [443]
+}
+
+variable "openvpn_udp_ports" {
+  type        = list(number)
+  description = "OpenVPN UDP ports list"
+  default     = [1194]
+}
+
 variable "http_ports" {
   type        = list(number)
   description = "HTTP/S ports"
   default     = [80, 443]
 }
-
 
 variable "consul_agent_ports" {
   type        = list(number)
@@ -76,13 +87,13 @@ variable "consul_agent_ports" {
 
 variable "consul_server_udp_ports" {
   type        = list(number)
-  description = "Consul ports list"
+  description = "Consul UDP ports list"
   default     = [8301, 8302, 8600]
 }
 
 variable "consul_server_tcp_ports" {
   type        = list(number)
-  description = "Consul ports list"
+  description = "Consul TCP ports list"
   default     = [8300, 8301, 8302, 8500, 8600]
 }
 
